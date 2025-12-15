@@ -33,7 +33,7 @@ const PICKLES = [
   { id: "kakarakaya-pickle", name: "Kakarakaya Pickle", basePrice: 175, baseWeight: "250g" }
 ];
 
-// 🌶️ PODULU / KARAMS
+// 🌶️ PODULU
 const PODULU = [
   { id: "kakarakaya-karam", name: "Kakarakaya Karam", basePrice: 200, baseWeight: "250g" },
   { id: "aviseginjala", name: "Aviseginjala Karam", basePrice: 200, baseWeight: "250g" },
@@ -52,6 +52,7 @@ const PODULU = [
 ];
 
 const styles = {
+  exportBtn: { background: "#2563eb", color: "#fff", padding: 8, borderRadius: 6, border: "none", marginRight: 8 },
   page: { padding: 16, paddingBottom: 120, background: "#faf7f2", minHeight: "100vh", fontFamily: "Arial, sans-serif" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   grid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 },
@@ -59,21 +60,29 @@ const styles = {
   faded: { opacity: 0.5 },
   buttonOrange: { background: "#ea580c", color: "#fff", padding: 10, borderRadius: 8, width: "100%", border: "none" },
   buttonGreen: { background: "#16a34a", color: "#fff", padding: 12, borderRadius: 8, width: "100%", border: "none" },
-  cart: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", padding: 12, boxShadow: "0 -2px 6px rgba(0,0,0,0.2)" }
+  cart: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", padding: 12, boxShadow: "0 -2px 6px rgba(0,0,0,0.2)" },
+  adminBox: { background: "#fff", padding: 12, borderRadius: 10, marginBottom: 12 }
 };
 
 export default function VijayaHomeFoods() {
-  const [category, setCategory] = useState("ALL");
+  const [view, setView] = useState("SHOP");
   const [search, setSearch] = useState("");
   const [selectedWeights, setSelectedWeights] = useState({});
   const [cart, setCart] = useState([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [outOfStock, setOutOfStock] = useState({});
+  const [stock, setStock] = useState({});
+  const [sales, setSales] = useState({});
 
   useEffect(() => {
-    document.title = "Vijaya Home Foods | Traditional Andhra Pickles & Podulu";
-    setOutOfStock(JSON.parse(localStorage.getItem("outOfStock") || "{}"));
+    const savedStock = JSON.parse(localStorage.getItem("stock") || "{}");
+    const initialStock = {};
+    [...PICKLES, ...PODULU].forEach(p => {
+      initialStock[p.id] = savedStock[p.id] ?? 10;
+    });
+    setStock(initialStock);
+
+    setSales(JSON.parse(localStorage.getItem("sales") || "{}"));
   }, []);
 
   const priceFor = (item) => Math.round(
@@ -83,45 +92,117 @@ export default function VijayaHomeFoods() {
   );
 
   const addToCart = (item) => {
-    if (outOfStock[item.id]) return;
+    if (stock[item.id] <= 0) return;
     const weight = selectedWeights[item.id] || "250g";
     const price = priceFor(item);
     setCart([...cart, { ...item, weight, price }]);
   };
 
-  const toggleStock = (id) => {
-    const updated = { ...outOfStock, [id]: !outOfStock[id] };
-    setOutOfStock(updated);
-    localStorage.setItem("outOfStock", JSON.stringify(updated));
+  const updateStock = (id, value) => {
+    const updated = { ...stock, [id]: Math.max(0, Number(value)) };
+    setStock(updated);
+    localStorage.setItem("stock", JSON.stringify(updated));
   };
 
   const total = cart.reduce((s, i) => s + i.price, 0);
 
   const generateInvoicePDF = () => {
-    let win = window.open("", "Invoice", "width=800,height=600");
+    const invoiceNo = "VH-" + Date.now().toString().slice(-5);
+    const dateStr = new Date().toLocaleString();
+
+    const rows = cart.map(
+      i => `<tr>
+        <td style="padding:6px;border:1px solid #ccc;">${i.name} (${i.weight})</td>
+        <td style="padding:6px;border:1px solid #ccc;text-align:center;">1</td>
+        <td style="padding:6px;border:1px solid #ccc;text-align:right;">₹${i.price}</td>
+      </tr>`
+    ).join("");
+
+    const html = `
+      <html>
+      <head>
+        <title>Invoice</title>
+      </head>
+      <body style="font-family:Arial,sans-serif;padding:20px;">
+        <div style="text-align:center;">
+          <img src="logo.png" style="max-width:120px;margin-bottom:8px;" />
+          <h2 style="margin:4px 0;">Vijaya Home Foods</h2>
+          <div style="font-size:13px;">Authentic Andhra Brahmin Preparations</div>
+        </div>
+
+        <hr />
+        <div style="font-size:13px;">Invoice No: ${invoiceNo}</div>
+        <div style="font-size:13px;">Date: ${dateStr}</div>
+        <hr />
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left;">Item</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:center;">Qty</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:right;">Price</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+
+        <h3 style="text-align:right;margin-top:10px;">Total: ₹${total}</h3>
+
+        <hr />
+        <div style="text-align:center;font-size:13px;">Thank you for your order 🙏</div>
+        <div style="text-align:center;font-size:13px;">WhatsApp: 9030124218</div>
+
+        <script>
+          window.onload = () => { window.print(); }
+        </script>
+      </body>
+      </html>
+    `;
+
+    const win = window.open("", "Invoice", "width=800,height=600");
     if (!win) return alert("Please allow popups to download invoice");
-    win.document.write(`<h2>Vijaya Home Foods</h2><p>Date: ${new Date().toLocaleString()}</p>`);
-    cart.forEach(i => win.document.write(`<p>${i.name} (${i.weight}) - ₹${i.price}</p>`));
-    win.document.write(`<h3>Total: ₹${total}</h3>`);
-    win.print();
+    win.document.write(html);
+    win.document.close();
   };
 
   const placeOrderWhatsApp = () => {
     const msg = cart.map(i => `${i.name} ${i.weight} - ₹${i.price}`).join("\n");
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+
+    const updatedStock = { ...stock };
+    cart.forEach(i => {
+      if (updatedStock[i.id] > 0) updatedStock[i.id] -= 1;
+    });
+    setStock(updatedStock);
+    localStorage.setItem("stock", JSON.stringify(updatedStock));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const updatedSales = { ...sales };
+    if (!updatedSales[today]) updatedSales[today] = { orders: 0, total: 0 };
+    updatedSales[today].orders += 1;
+    updatedSales[today].total += total;
+    setSales(updatedSales);
+    localStorage.setItem("sales", JSON.stringify(updatedSales));
+
     generateInvoicePDF();
     setCart([]);
   };
 
+  const filterItems = (items) => items.filter(i =>
+    i.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   const renderItem = (item) => (
-    <div key={item.id} style={{ ...styles.card, ...(outOfStock[item.id] ? styles.faded : {}) }}>
+    <div key={item.id} style={{ ...styles.card, ...(stock[item.id] <= 0 ? styles.faded : {}) }}>
       <strong>{item.name}</strong>
       {isAdmin && (
-        <div>
-          <button onClick={() => toggleStock(item.id)} style={{ fontSize: 12, marginBottom: 6 }}>
-            {outOfStock[item.id] ? "Mark In Stock" : "Mark Out of Stock"}
-          </button>
-        </div>
+        <input
+          type="number"
+          min="0"
+          value={stock[item.id]}
+          onChange={(e) => updateStock(item.id, e.target.value)}
+          style={{ width: "100%", margin: "6px 0" }}
+        />
       )}
       <select
         style={{ width: "100%", padding: 6, margin: "6px 0" }}
@@ -131,21 +212,60 @@ export default function VijayaHomeFoods() {
         {WEIGHTS.map(w => <option key={w}>{w}</option>)}
       </select>
       <div>₹{priceFor(item)}</div>
-      <button style={styles.buttonOrange} disabled={outOfStock[item.id]} onClick={() => addToCart(item)}>Add to Cart</button>
+      <button style={styles.buttonOrange} disabled={stock[item.id] <= 0} onClick={() => addToCart(item)}>Add to Cart</button>
     </div>
   );
 
-    const filterItems = (items) => items.filter(i => {
-    const matchCategory = category === "ALL" || category === i.category;
-    const matchSearch = i.name.toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+ const exportExcel = (mode) => {
+  let rows = [];
+
+  if (mode === "DAILY") {
+    Object.entries(sales).forEach(([date, v]) => {
+      rows.push(`${date},${v.orders},${v.total}`);
+    });
+  } else {
+    const monthly = {};
+    Object.entries(sales).forEach(([date, v]) => {
+      const month = date.slice(0, 7);
+      if (!monthly[month]) monthly[month] = { orders: 0, total: 0 };
+      monthly[month].orders += v.orders;
+      monthly[month].total += v.total;
+    });
+
+    Object.entries(monthly).forEach(([m, v]) => {
+      rows.push(`${m},${v.orders},${v.total}`);
+    });
+  }
+
+  const csvData = "Date/Month,Orders,Total\n" + rows.join("\n");
+
+  const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = mode === "DAILY" ? "daily-sales.csv" : "monthly-sales.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+};
+
+
+  const todaySales = sales[todayKey] || { orders: 0, total: 0 };
 
   return (
     <div style={styles.page}>
       <div style={styles.header}>
         <h2>Vijaya Home Foods</h2>
-        <button onClick={() => setShowAdmin(!showAdmin)}>Admin</button>
+        <div>
+          <button onClick={() => setView("SHOP")} style={{ marginRight: 8 }}>Shop</button>
+          {isAdmin && <button onClick={() => setView("ADMIN")}>Admin Dashboard</button>}
+          {!isAdmin && <button onClick={() => setShowAdmin(!showAdmin)} style={{ marginLeft: 8 }}>Admin</button>}
+        </div>
       </div>
 
       {showAdmin && !isAdmin && (
@@ -155,71 +275,77 @@ export default function VijayaHomeFoods() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && e.target.value === ADMIN_PIN) {
               setIsAdmin(true);
+              setView("ADMIN");
               e.target.value = "";
             }
           }}
         />
       )}
 
-      {/* Search + Category */}
-      <div style={{ marginBottom: 12 }}>
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "100%", padding: 8, marginBottom: 8 }}
-        />
-        <div style={{ display: "flex", gap: 8 }}>
-          {["ALL", "PICKLES", "PODULU"].map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategory(c)}
-              style={{
-                padding: "6px 10px",
-                background: category === c ? "#ea580c" : "#ddd",
-                color: category === c ? "#fff" : "#000",
-                borderRadius: 6,
-                border: "none",
-              }}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {(category === "ALL" || category === "PICKLES") && (
+      {view === "SHOP" && (
         <>
+          <input
+            placeholder="Search products"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", padding: 8, marginBottom: 12 }}
+          />
+
           <h3>Pickles</h3>
-          <div style={styles.grid}>
-            {filterItems(
-              PICKLES.map((p) => ({ ...p, category: "PICKLES" }))
-            ).map(renderItem)}
-          </div>
-        </>
-      )}
+          <div style={styles.grid}>{filterItems(PICKLES).map(renderItem)}</div>
 
-      {(category === "ALL" || category === "PODULU") && (
-        <>
           <h3 style={{ marginTop: 16 }}>Podulu</h3>
-          <div style={styles.grid}>
-            {filterItems(
-              PODULU.map((p) => ({ ...p, category: "PODULU" }))
-            ).map(renderItem)}
-          </div>
+          <div style={styles.grid}>{filterItems(PODULU).map(renderItem)}</div>
+
+          {cart.length > 0 && (
+            <div style={styles.cart}>
+              <div>Total ₹{total}</div>
+              <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>
+                Order on WhatsApp & Download Invoice
+              </button>
+            </div>
+          )}
         </>
       )}
 
-      {cart.length > 0 && (
-        <div style={styles.cart}>
-          <div>Total ₹{total}</div>
-          <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>
-            Order on WhatsApp & Download Invoice
-          </button>
-        </div>
+      {view === "ADMIN" && isAdmin && (
+        <>
+          <div style={styles.adminBox}>
+            <h3>Today Summary</h3>
+            <div>Orders: {todaySales.orders}</div>
+            <div>Sales: ₹{todaySales.total}</div>
+          </div>
+
+          <div style={styles.adminBox}>
+            <h3>Stock Management</h3>
+            {[...PICKLES, ...PODULU].map(p => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span>{p.name}</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={stock[p.id]}
+                  onChange={(e) => updateStock(p.id, e.target.value)}
+                  style={{ width: 80 }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={styles.adminBox}>
+            <h3>Sales Export</h3>
+            <button style={styles.exportBtn} onClick={() => exportExcel("DAILY")}>Export Daily Excel</button>
+            <button style={styles.exportBtn} onClick={() => exportExcel("MONTHLY")}>Export Monthly Excel</button>
+          </div>
+
+          <div style={styles.adminBox}>
+            <h3>Monthly Summary</h3>
+            <p style={{ fontSize: 12, opacity: 0.7 }}>
+              Monthly totals & Excel export will be enabled in Phase 3
+            </p>
+          </div>
+        </>
       )}
     </div>
   );
 }
-
