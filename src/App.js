@@ -63,6 +63,8 @@ const styles = {
 };
 
 export default function VijayaHomeFoods() {
+  const [category, setCategory] = useState("ALL");
+  const [search, setSearch] = useState("");
   const [selectedWeights, setSelectedWeights] = useState({});
   const [cart, setCart] = useState([]);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -133,6 +135,12 @@ export default function VijayaHomeFoods() {
     </div>
   );
 
+    const filterItems = (items) => items.filter(i => {
+    const matchCategory = category === "ALL" || category === i.category;
+    const matchSearch = i.name.toLowerCase().includes(search.toLowerCase());
+    return matchCategory && matchSearch;
+  });
+
   return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -141,21 +149,77 @@ export default function VijayaHomeFoods() {
       </div>
 
       {showAdmin && !isAdmin && (
-        <input type="password" placeholder="Admin PIN" onKeyDown={e => e.key === "Enter" && e.target.value === ADMIN_PIN && setIsAdmin(true)} />
+        <input
+          type="password"
+          placeholder="Admin PIN"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target.value === ADMIN_PIN) {
+              setIsAdmin(true);
+              e.target.value = "";
+            }
+          }}
+        />
       )}
 
-      <h3>Pickles</h3>
-      <div style={styles.grid}>{PICKLES.map(renderItem)}</div>
+      {/* Search + Category */}
+      <div style={{ marginBottom: 12 }}>
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", padding: 8, marginBottom: 8 }}
+        />
+        <div style={{ display: "flex", gap: 8 }}>
+          {["ALL", "PICKLES", "PODULU"].map((c) => (
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              style={{
+                padding: "6px 10px",
+                background: category === c ? "#ea580c" : "#ddd",
+                color: category === c ? "#fff" : "#000",
+                borderRadius: 6,
+                border: "none",
+              }}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <h3 style={{ marginTop: 16 }}>Podulu</h3>
-      <div style={styles.grid}>{PODULU.map(renderItem)}</div>
+      {(category === "ALL" || category === "PICKLES") && (
+        <>
+          <h3>Pickles</h3>
+          <div style={styles.grid}>
+            {filterItems(
+              PICKLES.map((p) => ({ ...p, category: "PICKLES" }))
+            ).map(renderItem)}
+          </div>
+        </>
+      )}
+
+      {(category === "ALL" || category === "PODULU") && (
+        <>
+          <h3 style={{ marginTop: 16 }}>Podulu</h3>
+          <div style={styles.grid}>
+            {filterItems(
+              PODULU.map((p) => ({ ...p, category: "PODULU" }))
+            ).map(renderItem)}
+          </div>
+        </>
+      )}
 
       {cart.length > 0 && (
         <div style={styles.cart}>
           <div>Total ₹{total}</div>
-          <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>Order on WhatsApp & Download Invoice</button>
+          <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>
+            Order on WhatsApp & Download Invoice
+          </button>
         </div>
       )}
     </div>
   );
 }
+
