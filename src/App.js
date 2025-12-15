@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import "./App.css";
 
-
-// 🌐 Public path (CRA + GitHub Pages safe)
 // 🔐 Admin PIN
 const ADMIN_PIN = "845921";
 
@@ -54,6 +51,17 @@ const PODULU = [
   { id: "dhaniya", name: "Andhra Special Dhaniya Masala", basePrice: 175, baseWeight: "250g" }
 ];
 
+const styles = {
+  page: { padding: 16, paddingBottom: 120, background: "#faf7f2", minHeight: "100vh", fontFamily: "Arial, sans-serif" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 },
+  card: { background: "#fff", padding: 12, borderRadius: 10, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" },
+  faded: { opacity: 0.5 },
+  buttonOrange: { background: "#ea580c", color: "#fff", padding: 10, borderRadius: 8, width: "100%", border: "none" },
+  buttonGreen: { background: "#16a34a", color: "#fff", padding: 12, borderRadius: 8, width: "100%", border: "none" },
+  cart: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", padding: 12, boxShadow: "0 -2px 6px rgba(0,0,0,0.2)" }
+};
+
 export default function VijayaHomeFoods() {
   const [selectedWeights, setSelectedWeights] = useState({});
   const [cart, setCart] = useState([]);
@@ -88,112 +96,64 @@ export default function VijayaHomeFoods() {
   const total = cart.reduce((s, i) => s + i.price, 0);
 
   const generateInvoicePDF = () => {
-    let win = null;
-    try {
-      win = window.open("", "Invoice", "width=800,height=600");
-    } catch (e) {
-      win = null;
-    }
-
-    if (!win || win.closed) {
-      alert("Invoice popup was blocked. Please allow popups and try again.");
-      return;
-    }
-
-    const html = `
-      <html>
-        <head>
-          <title>Invoice - Vijaya Home Foods</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h2 { margin-bottom: 4px; }
-            hr { margin: 12px 0; }
-          </style>
-        </head>
-        <body>
-          <h2>Vijaya Home Foods</h2>
-          <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-          <hr />
-          ${cart.map(i => `<p>${i.name} (${i.weight}) - ₹${i.price}</p>`).join("")}
-          <hr />
-          <h3>Total: ₹${total}</h3>
-        </body>
-      </html>
-    `;
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-
-    // Delay print to avoid null blur errors in Chrome
-    setTimeout(() => {
-      try {
-        win.focus();
-        win.print();
-      } catch (e) {
-        console.warn("Print skipped due to browser restrictions");
-      }
-    }, 300);
+    let win = window.open("", "Invoice", "width=800,height=600");
+    if (!win) return alert("Please allow popups to download invoice");
+    win.document.write(`<h2>Vijaya Home Foods</h2><p>Date: ${new Date().toLocaleString()}</p>`);
+    cart.forEach(i => win.document.write(`<p>${i.name} (${i.weight}) - ₹${i.price}</p>`));
+    win.document.write(`<h3>Total: ₹${total}</h3>`);
+    win.print();
   };
 
   const placeOrderWhatsApp = () => {
     const msg = cart.map(i => `${i.name} ${i.weight} - ₹${i.price}`).join("\n");
-    const encodedMsg = encodeURIComponent(`Order from Vijaya Home Foods
-${msg}
-Total ₹${total}`);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMsg}`, "_blank");
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     generateInvoicePDF();
     setCart([]);
   };
 
   const renderItem = (item) => (
-    <div key={item.id} className={`bg-white p-4 rounded shadow ${outOfStock[item.id] ? "opacity-50" : ""}`}>
-      <h4 className="font-semibold">{item.name}</h4>
+    <div key={item.id} style={{ ...styles.card, ...(outOfStock[item.id] ? styles.faded : {}) }}>
+      <strong>{item.name}</strong>
       {isAdmin && (
-        <button onClick={() => toggleStock(item.id)} className="text-xs underline">
-          {outOfStock[item.id] ? "Mark In Stock" : "Mark Out of Stock"}
-        </button>
+        <div>
+          <button onClick={() => toggleStock(item.id)} style={{ fontSize: 12, marginBottom: 6 }}>
+            {outOfStock[item.id] ? "Mark In Stock" : "Mark Out of Stock"}
+          </button>
+        </div>
       )}
       <select
-        className="w-full border p-1 my-2"
+        style={{ width: "100%", padding: 6, margin: "6px 0" }}
         value={selectedWeights[item.id] || "250g"}
         onChange={(e) => setSelectedWeights({ ...selectedWeights, [item.id]: e.target.value })}
       >
         {WEIGHTS.map(w => <option key={w}>{w}</option>)}
       </select>
-      <p>₹{priceFor(item)}</p>
-      <button
-        disabled={outOfStock[item.id]}
-        onClick={() => addToCart(item)}
-        className="bg-orange-600 disabled:bg-gray-400 text-white w-full py-2 rounded"
-      >
-        Add to Cart
-      </button>
+      <div>₹{priceFor(item)}</div>
+      <button style={styles.buttonOrange} disabled={outOfStock[item.id]} onClick={() => addToCart(item)}>Add to Cart</button>
     </div>
   );
 
   return (
-    <div className="card">
-      <header className="flex justify-between mb-4">
-        <h1 className="text-xl font-bold">Vijaya Home Foods</h1>
-        <button onClick={() => setShowAdmin(!showAdmin)} className="btn-orange">Admin</button>
-      </header>
+    <div style={styles.page}>
+      <div style={styles.header}>
+        <h2>Vijaya Home Foods</h2>
+        <button onClick={() => setShowAdmin(!showAdmin)}>Admin</button>
+      </div>
 
       {showAdmin && !isAdmin && (
-        <input type="password" placeholder="Admin PIN" className="border p-1 mb-2"
-          onKeyDown={e => e.key === "Enter" && e.target.value === ADMIN_PIN && setIsAdmin(true)} />
+        <input type="password" placeholder="Admin PIN" onKeyDown={e => e.key === "Enter" && e.target.value === ADMIN_PIN && setIsAdmin(true)} />
       )}
 
-      <h2 className="font-semibold mt-3">Pickles</h2>
-      <div className="grid">{PICKLES.map(renderItem)}</div>
+      <h3>Pickles</h3>
+      <div style={styles.grid}>{PICKLES.map(renderItem)}</div>
 
-      <h2 className="font-semibold mt-4">Podulu</h2>
-      <div className="grid">{PODULU.map(renderItem)}</div>
+      <h3 style={{ marginTop: 16 }}>Podulu</h3>
+      <div style={styles.grid}>{PODULU.map(renderItem)}</div>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white p-3 shadow">
-          <p>Total ₹{total}</p>
-          <button onClick={placeOrderWhatsApp} className="btn-orange">Order on WhatsApp & Download Invoice</button>
+        <div style={styles.cart}>
+          <div>Total ₹{total}</div>
+          <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>Order on WhatsApp & Download Invoice</button>
         </div>
       )}
     </div>
