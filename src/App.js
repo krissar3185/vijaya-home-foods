@@ -125,7 +125,7 @@ export default function VijayaHomeFoods() {
       </head>
       <body style="font-family:Arial,sans-serif;padding:20px;">
         <div style="text-align:center;">
-          <img src="logo.png" style="max-width:120px;margin-bottom:8px;" />
+          <img src="logo.jpeg" style="max-width:120px;margin-bottom:8px;" />
           <h2 style="margin:4px 0;">Vijaya Home Foods</h2>
           <div style="font-size:13px;">Authentic Andhra Brahmin Preparations</div>
         </div>
