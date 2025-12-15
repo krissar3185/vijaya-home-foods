@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/vijaya-home-foods/static/css/main.e6c13ad2.css",
-    "main.js": "/vijaya-home-foods/static/js/main.2dfbef61.js",
+    "main.js": "/vijaya-home-foods/static/js/main.a7615d4e.js",
     "index.html": "/vijaya-home-foods/index.html",
     "main.e6c13ad2.css.map": "/vijaya-home-foods/static/css/main.e6c13ad2.css.map",
-    "main.2dfbef61.js.map": "/vijaya-home-foods/static/js/main.2dfbef61.js.map"
+    "main.a7615d4e.js.map": "/vijaya-home-foods/static/js/main.a7615d4e.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.2dfbef61.js"
+    "static/js/main.a7615d4e.js"
   ]
 }
