@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import "./App.css";
+
 
 // 🌐 Public path (CRA + GitHub Pages safe)
 // 🔐 Admin PIN
@@ -171,10 +173,10 @@ Total ₹${total}`);
   );
 
   return (
-    <div className="p-4 pb-24">
+    <div className="card">
       <header className="flex justify-between mb-4">
         <h1 className="text-xl font-bold">Vijaya Home Foods</h1>
-        <button onClick={() => setShowAdmin(!showAdmin)} className="text-sm underline">Admin</button>
+        <button onClick={() => setShowAdmin(!showAdmin)} className="btn-orange">Admin</button>
       </header>
 
       {showAdmin && !isAdmin && (
@@ -183,15 +185,15 @@ Total ₹${total}`);
       )}
 
       <h2 className="font-semibold mt-3">Pickles</h2>
-      <div className="grid grid-cols-2 gap-3">{PICKLES.map(renderItem)}</div>
+      <div className="grid">{PICKLES.map(renderItem)}</div>
 
       <h2 className="font-semibold mt-4">Podulu</h2>
-      <div className="grid grid-cols-2 gap-3">{PODULU.map(renderItem)}</div>
+      <div className="grid">{PODULU.map(renderItem)}</div>
 
       {cart.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white p-3 shadow">
           <p>Total ₹{total}</p>
-          <button onClick={placeOrderWhatsApp} className="bg-green-600 text-white w-full py-2 mt-2 rounded">Order on WhatsApp & Download Invoice</button>
+          <button onClick={placeOrderWhatsApp} className="btn-orange">Order on WhatsApp & Download Invoice</button>
         </div>
       )}
     </div>
