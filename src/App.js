@@ -110,13 +110,9 @@ export default function VijayaHomeFoods() {
     const invoiceNo = "VH-" + Date.now().toString().slice(-5);
     const dateStr = new Date().toLocaleString();
 
-    const rows = cart.map(
-      i => `<tr>
-        <td style="padding:6px;border:1px solid #ccc;">${i.name} (${i.weight})</td>
-        <td style="padding:6px;border:1px solid #ccc;text-align:center;">1</td>
-        <td style="padding:6px;border:1px solid #ccc;text-align:right;">₹${i.price}</td>
-      </tr>`
-    ).join("");
+    const rows = cart
+      .map(i => `${i.name} ${i.weight}  ₹${i.price}`)
+      .join("\n");
 
     const html = `
       <html>
@@ -125,7 +121,7 @@ export default function VijayaHomeFoods() {
       </head>
       <body style="font-family:Arial,sans-serif;padding:20px;">
         <div style="text-align:center;">
-          <img src="logo.jpeg" style="max-width:120px;margin-bottom:8px;" />
+          <img src="logo.png" style="max-width:120px;margin-bottom:8px;" />
           <h2 style="margin:4px 0;">Vijaya Home Foods</h2>
           <div style="font-size:13px;">Authentic Andhra Brahmin Preparations</div>
         </div>
@@ -163,6 +159,25 @@ export default function VijayaHomeFoods() {
     if (!win) return alert("Please allow popups to download invoice");
     win.document.write(html);
     win.document.close();
+  };
+
+  const generateThermalInvoice = () => {
+    const rows = cart
+      .map(i => `${i.name} ${i.weight}  ₹${i.price}`)
+      .join("\n");
+
+    const text = `VIJAYA HOME FOODS
+--------------------
+${rows}
+--------------------
+TOTAL ₹${total}
+--------------------
+WhatsApp: 9030124218`;
+
+    const win = window.open("", "ThermalInvoice", "width=300,height=600");
+    if (!win) return;
+    win.document.write(`<pre style="font-family:monospace;font-size:14px;">${text}</pre>`);
+    win.print();
   };
 
   const placeOrderWhatsApp = () => {
@@ -218,43 +233,38 @@ export default function VijayaHomeFoods() {
 
   const todayKey = new Date().toISOString().slice(0, 10);
 
- const exportExcel = (mode) => {
-  let rows = [];
+  const exportExcel = (mode) => {
+    let rows = [];
 
-  if (mode === "DAILY") {
-    Object.entries(sales).forEach(([date, v]) => {
-      rows.push(`${date},${v.orders},${v.total}`);
-    });
-  } else {
-    const monthly = {};
-    Object.entries(sales).forEach(([date, v]) => {
-      const month = date.slice(0, 7);
-      if (!monthly[month]) monthly[month] = { orders: 0, total: 0 };
-      monthly[month].orders += v.orders;
-      monthly[month].total += v.total;
-    });
+    if (mode === "DAILY") {
+      Object.entries(sales).forEach(([date, v]) => {
+        rows.push(`${date},${v.orders},${v.total}`);
+      });
+    } else {
+      const monthly = {};
+      Object.entries(sales).forEach(([date, v]) => {
+        const month = date.slice(0, 7);
+        if (!monthly[month]) monthly[month] = { orders: 0, total: 0 };
+        monthly[month].orders += v.orders;
+        monthly[month].total += v.total;
+      });
+      Object.entries(monthly).forEach(([m, v]) => {
+        rows.push(`${m},${v.orders},${v.total}`);
+      });
+    }
 
-    Object.entries(monthly).forEach(([m, v]) => {
-      rows.push(`${m},${v.orders},${v.total}`);
-    });
-  }
+    const csv = "Date/Month,Orders,Total" + rows.join("\n");
 
-  const csvData = "Date/Month,Orders,Total\n" + rows.join("\n");
-
-  const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = mode === "DAILY" ? "daily-sales.csv" : "monthly-sales.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
-};
-
-
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = mode === "DAILY" ? "daily-sales.csv" : "monthly-sales.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   const todaySales = sales[todayKey] || { orders: 0, total: 0 };
 
   return (
@@ -300,7 +310,7 @@ export default function VijayaHomeFoods() {
           {cart.length > 0 && (
             <div style={styles.cart}>
               <div>Total ₹{total}</div>
-              <button style={styles.buttonGreen} onClick={placeOrderWhatsApp}>
+              <button style={styles.buttonGreen} onClick={() => { placeOrderWhatsApp(); generateThermalInvoice(); }}>
                 Order on WhatsApp & Download Invoice
               </button>
             </div>
