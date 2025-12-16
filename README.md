@@ -3,7 +3,7 @@
 Traditional Andhra Brahmin–style **Pickles, Podulu, and Masalalu** – homemade with authenticity and care.
 
 🌐 **Live Website:**  
-https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME
+https://krissar3185.github.io/vijaya-home-foods
 
 ---
 
