@@ -402,9 +402,8 @@ WhatsApp: 9030124218`;
 
           <div style={styles.adminBox}>
             <h3>Monthly Summary</h3>
-            <p style={{ fontSize: 12, opacity: 0.7 }}>
-              Monthly totals & Excel export will be enabled in Phase 3
-            </p>
+            <div>Total Orders (This Month): {Object.values(sales).filter((_, k) => Object.keys(sales)[k].startsWith(new Date().toISOString().slice(0,7))).reduce((s,v)=>s+v.orders,0)}</div>
+            <div>Total Sales (This Month): ₹{Object.values(sales).filter((_, k) => Object.keys(sales)[k].startsWith(new Date().toISOString().slice(0,7))).reduce((s,v)=>s+v.total,0)}</div>
           </div>
         </>
       )}
