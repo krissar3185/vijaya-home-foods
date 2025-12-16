@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
-// 🔐 Admin PIN
-const ADMIN_PIN = "845921";
+// 🔐 Admin PIN (stored securely)
+const DEFAULT_ADMIN_PIN = "845921";
 
 // 📲 WhatsApp number
 const WHATSAPP_NUMBER = "919030124218";
@@ -74,6 +74,13 @@ export default function VijayaHomeFoods() {
   const [stock, setStock] = useState({});
   const [sales, setSales] = useState({});
 
+  // 🔐 Admin PIN states
+  const [adminPin, setAdminPin] = useState(localStorage.getItem("ADMIN_PIN") || DEFAULT_ADMIN_PIN);
+  const [oldPin, setOldPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinMsg, setPinMsg] = useState("");
+
   useEffect(() => {
     const savedStock = JSON.parse(localStorage.getItem("stock") || "{}");
     const initialStock = {};
@@ -121,7 +128,7 @@ export default function VijayaHomeFoods() {
       </head>
       <body style="font-family:Arial,sans-serif;padding:20px;">
         <div style="text-align:center;">
-          <img src="logo.png" style="max-width:120px;margin-bottom:8px;" />
+          <img src="logo.jpeg" style="max-width:120px;margin-bottom:8px;" />
           <h2 style="margin:4px 0;">Vijaya Home Foods</h2>
           <div style="font-size:13px;">Authentic Andhra Brahmin Preparations</div>
         </div>
@@ -288,7 +295,7 @@ WhatsApp: 9030124218`;
           type="password"
           placeholder="Admin PIN"
           onKeyDown={(e) => {
-            if (e.key === "Enter" && e.target.value === ADMIN_PIN) {
+            if (e.key === "Enter" && e.target.value === adminPin) {
               setIsAdmin(true);
               setView("ADMIN");
               e.target.value = "";
@@ -351,6 +358,46 @@ WhatsApp: 9030124218`;
             <h3>Sales Export</h3>
             <button style={styles.exportBtn} onClick={() => exportExcel("DAILY")}>Export Daily Excel</button>
             <button style={styles.exportBtn} onClick={() => exportExcel("MONTHLY")}>Export Monthly Excel</button>
+          </div>
+
+          <div style={styles.adminBox}>
+            <h3>Change Admin PIN</h3>
+            <input
+              type="password"
+              placeholder="Current PIN"
+              value={oldPin}
+              onChange={(e) => setOldPin(e.target.value)}
+              style={{ width: "100%", marginBottom: 6 }}
+            />
+            <input
+              type="password"
+              placeholder="New 6-digit PIN"
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value)}
+              style={{ width: "100%", marginBottom: 6 }}
+            />
+            <input
+              type="password"
+              placeholder="Confirm New PIN"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value)}
+              style={{ width: "100%", marginBottom: 6 }}
+            />
+            <button
+              style={styles.buttonGreen}
+              onClick={() => {
+                if (oldPin !== adminPin) return setPinMsg("Incorrect current PIN");
+                if (newPin.length !== 6) return setPinMsg("PIN must be 6 digits");
+                if (newPin !== confirmPin) return setPinMsg("PINs do not match");
+                localStorage.setItem("ADMIN_PIN", newPin);
+                setAdminPin(newPin);
+                setOldPin("");
+                setNewPin("");
+                setConfirmPin("");
+                setPinMsg("PIN updated successfully");
+              }}
+            >Save PIN</button>
+            {pinMsg && <div style={{ marginTop: 6, color: pinMsg.includes("success") ? "green" : "red" }}>{pinMsg}</div>}
           </div>
 
           <div style={styles.adminBox}>
