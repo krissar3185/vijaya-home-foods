@@ -234,11 +234,11 @@ WhatsApp: 9030124218`;
   const todayKey = new Date().toISOString().slice(0, 10);
 
   const exportExcel = (mode) => {
-    let rows = [];
+    let dataRows = [];
 
     if (mode === "DAILY") {
       Object.entries(sales).forEach(([date, v]) => {
-        rows.push(`${date},${v.orders},${v.total}`);
+        dataRows.push(`${date},${v.orders},${v.total}`);
       });
     } else {
       const monthly = {};
@@ -249,20 +249,25 @@ WhatsApp: 9030124218`;
         monthly[month].total += v.total;
       });
       Object.entries(monthly).forEach(([m, v]) => {
-        rows.push(`${m},${v.orders},${v.total}`);
+        dataRows.push(`${m},${v.orders},${v.total}`);
       });
     }
 
-    const csv = "Date/Month,Orders,Total" + rows.join("\n");
+    if (dataRows.length === 0) {
+      alert("No sales data to export yet");
+      return;
+    }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const csvData = "Date/Month,Orders,Total" + dataRows.join("\n");
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = mode === "DAILY" ? "daily-sales.csv" : "monthly-sales.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = mode === "DAILY" ? "daily-sales.csv" : "monthly-sales.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
   const todaySales = sales[todayKey] || { orders: 0, total: 0 };
