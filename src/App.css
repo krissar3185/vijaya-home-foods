@@ -38,61 +38,42 @@
 }
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
   background: #faf7f2;
-}
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.card {
-  background: white;
-  padding: 12px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
 }
 
 button {
   cursor: pointer;
-  border: none;
 }
 
-.btn-orange {
-  background: #ea580c;
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
+input, select {
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-.btn-green {
-  background: #16a34a;
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  width: 100%;
+h2, h3 {
+  margin: 8px 0;
 }
 
-.out {
-  opacity: 0.5;
+.admin-box {
+  background: #fff;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
 }
 
-.cart {
+.cart-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
+  background: #fff;
   padding: 12px;
   box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
 }
 
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
